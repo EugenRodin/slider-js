@@ -1,31 +1,34 @@
-function Carousel (containerId = '#carousel123', slideId = '.slide', interval = 2000) {
-  this.container = document.querySelector(containerId)
-  this.slides = this.container.querySelectorAll(slideId)
-  this.interval = interval
-}
+class Carousel {
+  constructor(p) {
+    const confing = ({ ...{containerId: '#carousel', slideId: '.slide', interval: 2000,}, ...p })
 
-Carousel.prototype = {
+    this.container = document.querySelector(confing.containerId)
+    this.slideItems = this.container.querySelectorAll(confing.slideId)
+    this.interval = confing.interval
+    this.isPlaying = confing.isPlaying
+  }
+
+    // if (objectWithInitParams === undefined) {
+    //   return defoultSettings
+    // }
+
+    // resultObject.containerId = objectWithInitParams.containerId || defoultSettings.containerId
+    // resultObject.slideId = objectWithInitParams.slideId || defoultSettings.slideId
+    // resultObject.interval = objectWithInitParams.interval || defoultSettings.interval
+    // resultObject.isPlaying = objectWithInitParams.isPlaying || defoultSettings.isPlaying
 
   _initProps () {
     this.controlsContainer = this.container.querySelector('#controls-container');
-    // this.pauseBtn = this.controlsContainer.querySelector('#pause-btn');
-    // this.nextBtn = this.controlsContainer.querySelector('#next-btn');
-    // this.prevBtn = this.controlsContainer.querySelector('#prev-btn');
-
-    this.SLIDES_COUNT = this.slides.length;
+    this.SLIDES_COUNT = this.slideItems.length;
     this.CODE_ARROW_LEFT = 'ArrowLeft';
-    this.CODE_ARROW_RIGHT = 'ArrowRight';Carousel.prototype.pauseHandler = function () {
-  this.isPlaying = false;
-  clearInterval(this.timerID);
-  this.pauseBtn.innerHTML = this.FA_PLAY; // Исправлено здесь
-};
+    this.CODE_ARROW_RIGHT = 'ArrowRight';
     this.CODE_SPACE = 'Space';
     this.FA_PAUSE = '<i class="far fa-pause-circle"></i>';
     this.FA_PLAY = '<i class="far fa-play-circle"></i>';
 
     this.currentSlide = 0;
     this.isPlaying = true;
-  },
+  }
 
   _initIndicators () {
     const indicators = document.createElement('div')
@@ -36,7 +39,7 @@ Carousel.prototype = {
     for (let i = 0; i < this.SLIDES_COUNT; i++) {
       const indicator = document.createElement('div')
       indicator.setAttribute('class', i ? 'indicator' : 'indicator active')
-      indicator.dataset.slideTo = '${i}'
+      indicator.dataset.slideTo = `${i}`
   
       indicators.append(indicator)
     }
@@ -51,7 +54,7 @@ Carousel.prototype = {
 // </div>
   this.indicatorsContainer = this.container.querySelector('#indicators-container')
   this.indicatorItems = this.indicatorsContainer.querySelectorAll('.indicator')
-  },
+  }
 
   _initControls () {
     const controls = document.createElement('div')
@@ -67,15 +70,17 @@ Carousel.prototype = {
     this.pauseBtn = this.container.querySelector('#pause-btn')
     this.prevBtn = this.container.querySelector('#prev-btn')
     this.nextBtn = this.container.querySelector('#next-btn')
-  },
+  }
 
-  _initListeners () {
+  _initListeners () {  
+    document.addEventListener('keydown', this._pressKey.bind(this));
     this.pauseBtn.addEventListener('click', this.pausePlayHandler.bind(this));
     this.nextBtn.addEventListener('click', this.nextHandler.bind(this));
     this.prevBtn.addEventListener('click', this.prevHandler.bind(this));
     this.indicatorsContainer.addEventListener('click', this._indicateHandler.bind(this));
-    document.addEventListener('keydown', this._pressKey.bind(this));
-},
+    this.container.addEventListener('mouseenter', this.pauseHandler.bind(this));
+    this.container.addEventListener('mouseleave', this.playHandler.bind(this));
+}
 
   _indicateHandler (e) {
     const { target } = e
@@ -84,60 +89,62 @@ Carousel.prototype = {
         this.pauseHandler();
         this._gotoNth(+target.dataset.slideTo);
     }
-},
+}
 _pressKey (e) {
     const { code } = e
     e.preventDefault()
     if (code === this.CODE_ARROW_LEFT) this.prevHandler();
     if (code === this.CODE_ARROW_RIGHT) this.nextHandler();
     if (code === this.CODE_SPACE) this.pausePlayHandler();
-},
+}
 
   _gotoNth (n) {
-      this.slides[this.currentSlide].classList.toggle('active')
+      this.slideItems[this.currentSlide].classList.toggle('active')
       this.indicatorItems[this.currentSlide].classList.toggle('active')
       this.currentSlide = (n + this.SLIDES_COUNT) % this.SLIDES_COUNT
-      this.slides[this.currentSlide].classList.toggle('active')
+      this.slideItems[this.currentSlide].classList.toggle('active')
       this.indicatorItems[this.currentSlide].classList.toggle('active')
-  },  
+  }  
 
   _gotoNext() {
       this._gotoNth(this.currentSlide + 1)
-  },
+  }
 
   _gotoPrev() {
       this._gotoNth(this.currentSlide - 1)
-  },
-
-  pauseHandler () {
-      this.isPlaying = false
-      clearInterval(this.timerID)
-      this.pauseBtn.innerHTML = this.FA_PLAY
-  },
+  }
 
   _tick() {
-      this.timerID = setInterval(() => this._gotoNext(), this.interval)
-  },
+    this.timerID = setInterval(() => this._gotoNext(), this.interval)
+  }
+
+  pauseHandler () {
+    if (!this.isPlaying) return
+    this.isPlaying = false
+    clearInterval(this.timerID)
+    this.pauseBtn.innerHTML = this.FA_PLAY
+  }
 
   playHandler () {
-      this.isPlaying = true
-      this.pauseBtn.innerHTML = this.FA_PAUSE
-      this._tick()
-  },
+    if (this.isPlaying) return
+    this.isPlaying = true
+    this.pauseBtn.innerHTML = this.FA_PAUSE
+    this._tick()
+  }
 
   pausePlayHandler() {
       this.isPlaying ? this.pauseHandler() : this.playHandler()
-  },
+  }
 
   prevHandler () {
       this.pauseHandler()
       this._gotoPrev()
-  },
+  }
 
   nextHandler () {
       this.pauseHandler();
       this._gotoNext();
-  },
+  }
 
 
   init () {
@@ -146,7 +153,7 @@ _pressKey (e) {
       this._initIndicators()
       this._initListeners()
       this._tick()
-  },
+  }
 }
 
-Carousel.prototype.constructor = Carousel;
+export default Carousel
